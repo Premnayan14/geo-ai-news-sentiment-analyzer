@@ -1,5 +1,6 @@
 import streamlit as st
 import pickle
+import numpy as np
 
 # ================= PAGE CONFIG =================
 st.set_page_config(
@@ -11,6 +12,24 @@ st.set_page_config(
 # ================= LOAD MODEL =================
 model = pickle.load(open("sentiment_model.pkl", "rb"))
 vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
+
+# ================= SIDEBAR =================
+st.sidebar.title("📌 Project Information")
+
+st.sidebar.markdown("### 👨‍💻 Developer")
+st.sidebar.write("Prem Nayan")
+
+st.sidebar.markdown("### 🤖 Model Used")
+st.sidebar.write("TF-IDF + Logistic Regression")
+
+st.sidebar.markdown("### 📊 Model Accuracy")
+st.sidebar.write("75.19%")
+
+st.sidebar.markdown("### 📁 Dataset Size")
+st.sidebar.write("5,883 samples")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("Built with Python & Streamlit")
 
 # ================= HEADER =================
 st.markdown(
@@ -26,21 +45,12 @@ st.markdown("---")
 # ================= INPUT =================
 st.markdown("## 📰 Enter News Text")
 
-with st.container():
-    st.markdown(
-        "<div style='padding:15px; border-radius:10px; border:1px solid #ddd;'>",
-        unsafe_allow_html=True
-    )
+user_text = st.text_area(
+    "Paste a news sentence or short paragraph below:",
+    height=150,
+    placeholder="Example: Peace talks between the two countries were successful..."
+)
 
-    user_text = st.text_area(
-        "Paste a news sentence or short paragraph below:",
-        height=150,
-        placeholder="Example: Peace talks between the two countries were successful..."
-    )
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# ================= BUTTON =================
 analyze = st.button("🔍 Analyze Sentiment")
 
 # ================= RESULT =================
@@ -48,49 +58,34 @@ if analyze:
     if user_text.strip() == "":
         st.warning("⚠️ Please enter some text before analyzing.")
     else:
-        # Vectorize input
         text_vector = vectorizer.transform([user_text])
-
-        # Prediction + confidence
         prediction = model.predict(text_vector)[0]
         probabilities = model.predict_proba(text_vector)[0]
-        confidence = max(probabilities) * 100
+        confidence = np.max(probabilities) * 100
 
         st.markdown("## 📊 Analysis Result")
 
-        with st.container():
+        if confidence < 65:
             st.markdown(
-                "<div style='padding:20px; border-radius:10px; background-color:#f9f9f9; border:1px solid #ddd;'>",
+                "<h3 style='color:orange;'>⚠️ Sentiment: MIXED / UNCERTAIN</h3>",
+                unsafe_allow_html=True
+            )
+        elif prediction.lower() == "positive":
+            st.markdown(
+                "<h3 style='color:green;'>✅ Sentiment: POSITIVE</h3>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                "<h3 style='color:red;'>❌ Sentiment: NEGATIVE</h3>",
                 unsafe_allow_html=True
             )
 
-            # ===== SENTIMENT LOGIC =====
-            if confidence < 65:
-                st.markdown(
-                    "<h3 style='color:orange; text-align:center;'>⚠️ Sentiment: MIXED / UNCERTAIN</h3>",
-                    unsafe_allow_html=True
-                )
-            elif prediction.lower() == "positive":
-                st.markdown(
-                    "<h3 style='color:green; text-align:center;'>✅ Sentiment: POSITIVE</h3>",
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    "<h3 style='color:red; text-align:center;'>❌ Sentiment: NEGATIVE</h3>",
-                    unsafe_allow_html=True
-                )
-
-            st.markdown(
-                f"<p style='text-align:center; font-size:16px;'>🔍 Model Confidence: <b>{confidence:.2f}%</b></p>",
-                unsafe_allow_html=True
-            )
-
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.write(f"🔍 Model Confidence: {confidence:.2f}%")
 
 # ================= FOOTER =================
 st.markdown("---")
 st.markdown(
-    "<p style='text-align: center; font-size: 12px; color: gray;'>AI & ML Project | Built with Python & Streamlit</p>",
+    "<p style='text-align: center; font-size: 12px; color: gray;'>Deployed using Streamlit Cloud</p>",
     unsafe_allow_html=True
 )
